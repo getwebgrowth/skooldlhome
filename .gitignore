@@ -37,11 +37,11 @@ next-env.d.ts
 
 # local env and sqlite database
 .env
-/prisma/dev.db
 
 # agents and backup folders
 .agents/
 backup/
 *.py
+
 
 
