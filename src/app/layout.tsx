@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Skool Video Downloader",
     description: "Archive your favorite Skool lessons locally for offline learning.",
-    url: "https://skoolvideosaver.com",
+    url: "https://www.skoolvideosaver.com",
     siteName: "Skool Video Downloader",
     type: "website",
   },

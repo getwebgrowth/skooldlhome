@@ -8,7 +8,7 @@ The ultimate companion for Skool learners. Save your favorite lessons for offlin
 - One-click MP4 extraction.
 
 ## Links
-- [Homepage](https://skoolvideosaver.com)
+- [Homepage](https://www.skoolvideosaver.com)
 - [Pricing](/pricing.md)
 - [Blog](/blog)
 - [Terms](/terms)
