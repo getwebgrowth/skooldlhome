@@ -4,7 +4,7 @@ The ultimate companion for Skool learners. Save your favorite lessons for offlin
 
 ## Core Capabilities
 - Download videos from Skool classroom modules.
-- Supports Mux, Loom, Vimeo, Wistia, and YouTube.
+- Supports Skool native (Mux), Loom, Vimeo, and Wistia. YouTube is not supported.
 - One-click MP4 extraction.
 
 ## Links

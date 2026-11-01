@@ -32,9 +32,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/css/shared-typography.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-        <link rel="icon" href="/assets/images/img_a38993e738.png" />
-      </head>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />      </head>
       <body>
         {children}
       </body>

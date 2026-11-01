@@ -1,88 +1,87 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
-import EmailProvider from "next-auth/providers/email";
-import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { usersCollection } from "@/lib/db";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
-  secret: process.env.NEXTAUTH_SECRET || "f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8",
+  // No fallback on purpose: a hardcoded secret would let anyone forge sessions
+  // if the env var were ever missing. NextAuth refuses to run in production
+  // without one.
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
   providers: [
     CredentialsProvider({
-      name: "Test Login",
+      name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text", placeholder: "admin@test.com" },
-        password: { label: "Password", type: "password" }
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        console.log("Authorize attempt:", credentials?.email);
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing credentials");
           return null;
         }
 
-        try {
-          // Test Admin
-          if (credentials.email === "admin@test.com" && credentials.password === "admin123") {
-            console.log("Admin login match");
-            let user = await prisma.user.findUnique({ where: { email: "admin@test.com" } });
-            if (!user) {
-              console.log("Creating test admin user");
-              user = await prisma.user.create({ 
-                data: { email: "admin@test.com", name: "Test Admin" } 
-              });
-            }
-            return user;
-          }
+        const email = credentials.email.toLowerCase().trim();
 
-          // Test User
-          if (credentials.email === "user@test.com" && credentials.password === "user123") {
-            console.log("User login match");
-            let user = await prisma.user.findUnique({ where: { email: "user@test.com" } });
-            if (!user) {
-              console.log("Creating test user");
-              user = await prisma.user.create({ 
-                data: { email: "user@test.com", name: "Test User" } 
-              });
-            }
-            return user;
-          }
-        } catch (error) {
-          console.error("Database error in authorize:", error);
-          throw new Error("Database connection failed");
+        // Slow down password guessing: per IP and per targeted account.
+        const [byIp, byEmail] = await Promise.all([
+          rateLimit("login-ip", clientIp(req?.headers), 20, 15 * 60),
+          rateLimit("login-email", email, 10, 15 * 60),
+        ]);
+        if (!byIp.allowed || !byEmail.allowed) {
+          throw new Error("Too many login attempts. Please wait 15 minutes and try again.");
         }
 
-        console.log("No match found for:", credentials.email);
-        return null;
-      }
-    }),
-    EmailProvider({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        let user;
+        try {
+          const users = await usersCollection();
+          user = await users.findOne({ email });
+        } catch (err) {
+          console.error("Login failed: database unreachable", err);
+          throw new Error("Login is temporarily unavailable. Please try again in a few minutes.");
+        }
+
+        if (!user || !user.passwordHash) {
+          return null;
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        if (!isValid) {
+          return null;
+        }
+
+        return {
+          id: user._id!.toString(),
+          email: user.email,
+          name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+          image: user.image || null,
+        };
+      },
     }),
   ],
   callbacks: {
     session: async ({ session, token }) => {
       if (session.user && token.sub) {
-        session.user.id = token.sub;
+        (session.user as any).id = token.sub;
       }
       return session;
     },
     jwt: async ({ token, user }) => {
-      if (user) {
-        token.sub = user.id;
+      if (user?.email) {
+        // Always resolve the sub/id from our own users collection by email,
+        // since the CredentialsProvider id and the Mongo _id must match.
+        const users = await usersCollection();
+        const dbUser = await users.findOne({ email: user.email.toLowerCase().trim() });
+        if (dbUser?._id) {
+          token.sub = dbUser._id.toString();
+        }
         token.email = user.email;
       }
       return token;
-    }
+    },
   },
   pages: {
     signIn: "/login",

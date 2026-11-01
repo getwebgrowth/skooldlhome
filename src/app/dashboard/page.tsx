@@ -1,11 +1,19 @@
 import React from 'react';
+import { CHROME_STORE_URL } from "@/lib/site";
 import styles from './dashboard.module.css';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { usersCollection, subscriptionsCollection, licenseKeysCollection } from "@/lib/db";
+import { fetchLifetimePricingForDisplay } from "@/lib/pricing";
+import { isSubscriptionCurrentlyActive } from "@/lib/subscription";
 import { redirect } from "next/navigation";
 import DashboardNavbar from "./navbar";
 import PricingSection from "./pricing-section";
+import LicenseList from "./license-list";
+
+// TODO(extension-id): the 3 chromewebstore.google.com links below still use
+// the EXTENSION_ID_HERE placeholder — replace with the real Chrome Web Store
+// URL once the extension is published.
 
 export default async function UserDashboard() {
   const session = await getServerSession(authOptions);
@@ -14,18 +22,36 @@ export default async function UserDashboard() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email! },
-    include: { subscription: true },
-  });
+  const users = await usersCollection();
+  const user = await users.findOne({ email: session.user.email! });
 
   if (!user) {
     redirect("/login");
   }
 
-  const subscriptionStatus = user.subscription?.status || "Free";
-  const planName = user.subscription?.plan || "No Plan";
-  const isFree = subscriptionStatus !== "active";
+  const subscriptions = await subscriptionsCollection();
+  const subscription = await subscriptions.findOne({ userId: user._id!.toString() });
+
+  const isPremiumActive = isSubscriptionCurrentlyActive(subscription);
+  // "expired" specifically flags the case where our own currentPeriodEnd
+  // safety net cut off access even though Dodo's own status still says
+  // active (i.e. its cancellation webhook hasn't caught up yet) — see
+  // src/lib/subscription.ts.
+  const subscriptionStatus = subscription
+    ? (isPremiumActive ? subscription.status : (subscription.status === "active" ? "expired" : subscription.status))
+    : "Free";
+  const planName = subscription?.plan || "No Plan";
+  const isFree = !isPremiumActive;
+
+  const licenseKeysCol = await licenseKeysCollection();
+  const licenseKeys = (await licenseKeysCol.find({ email: user.email! }).toArray()).map((lk) => ({
+    id: lk._id!.toString(),
+    key: lk.key,
+    plan: lk.plan,
+    deviceId: lk.deviceId ?? null,
+  }));
+
+  const { price: currentLifetimePrice, slotsTaken: currentSlotsTaken, nextPrice } = await fetchLifetimePricingForDisplay();
 
   return (
     <div className={styles.dashboardPage}>
@@ -45,7 +71,16 @@ export default async function UserDashboard() {
           <div className={styles.planBadge}>{planName}</div>
         </header>
 
-        {isFree && <PricingSection userEmail={user.email || ''} />}
+        {isFree && (
+          <PricingSection 
+            userEmail={user.email || ''} 
+            lifetimePrice={currentLifetimePrice}
+            slotsTaken={currentSlotsTaken}
+            nextPrice={nextPrice}
+          />
+        )}
+
+        {licenseKeys.length > 0 && <LicenseList licenseKeys={licenseKeys} />}
 
         <div className={styles.grid}>
           {/* Account Status Card */}
@@ -73,7 +108,7 @@ export default async function UserDashboard() {
               <h3>Downloads</h3>
             </div>
             <p className={styles.cardText}>Total videos archived: <strong>0</strong></p>
-            <a href="https://chromewebstore.google.com/detail/skool-video-saver/EXTENSION_ID_HERE" target="_blank" rel="noopener noreferrer">
+            <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer">
               <button className={styles.button}>Download Chrome Extension</button>
             </a>
           </div>
@@ -88,11 +123,11 @@ export default async function UserDashboard() {
             </div>
             <p className={styles.cardText}>Enable Loom and Skool download features via our extension:</p>
             <div className={styles.toolLinks}>
-              <a href="https://chromewebstore.google.com/detail/skool-video-saver/EXTENSION_ID_HERE" target="_blank" rel="noopener noreferrer" className={styles.toolLinkItem}>
+              <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer" className={styles.toolLinkItem}>
                 <span>Skool Video Downloader</span>
                 <span className={styles.extensionBadge}>Extension</span>
               </a>
-              <a href="https://chromewebstore.google.com/detail/skool-video-saver/EXTENSION_ID_HERE" target="_blank" rel="noopener noreferrer" className={styles.toolLinkItem}>
+              <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer" className={styles.toolLinkItem}>
                 <span>Loom Video Downloader</span>
                 <span className={styles.extensionBadge}>Extension</span>
               </a>
