@@ -1,4 +1,5 @@
 import React from 'react';
+import { CHROME_STORE_URL } from "@/lib/site";
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
@@ -16,7 +17,7 @@ export default async function BlogList() {
   const postsDirectory = path.join(process.cwd(), 'content/blog');
   const filenames = fs.readdirSync(postsDirectory);
 
-  const posts = filenames.map((filename) => {
+  const posts: any[] = filenames.map((filename) => {
     const filePath = path.join(postsDirectory, filename);
     const fileContents = fs.readFileSync(filePath, 'utf8');
     const { data, content } = matter(fileContents);
@@ -31,11 +32,11 @@ export default async function BlogList() {
       readingTime: `${minutes} min read`,
       ...data,
     };
-  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const featuredPost = posts[0];
   const otherPosts = posts.slice(1);
-  const categories = Array.from(new Set(posts.map(p => p.category || 'Guides')));
+  const categories = Array.from(new Set(posts.map((p: any) => p.category || 'Guides')));
 
   const loginButton = session 
     ? `<a href="/dashboard"><button class="button button--secondary button--small">Dashboard</button></a>`
@@ -43,7 +44,7 @@ export default async function BlogList() {
     
   const getItNowButton = session
     ? `<a href="/dashboard" target="_blank"><button class="button button--primary button--small">Get It Now</button></a>`
-    : `<a href="https://chromewebstore.google.com/detail/skool-video-saver/EXTENSION_ID_HERE" target="_blank"><button class="button button--primary button--small">Get It Now</button></a>`;
+    : `<a href="${CHROME_STORE_URL}" target="_blank"><button class="button button--primary button--small">Get It Now</button></a>`;
 
   return (
     <div className="page-blog-list">
@@ -294,7 +295,7 @@ export default async function BlogList() {
                 <a className="footer-feature-link" href="/#video-detect">Video Inspector</a>
                 <a className="footer-feature-link" href="/#live-text-editor">Mux Video Support</a>
                 <a className="footer-feature-link" href="/#font-changer">Wistia Support</a>
-                <a className="footer-feature-link" href="/#font-detection">YouTube Support</a>
+                <a className="footer-feature-link" href="/#font-detection">Native Skool Player</a>
                 <a className="footer-feature-link" href="/#quality-select">Format Selector</a>
                 <a className="footer-feature-link" href="/#color-palette">Classroom Lesson Saver</a>
                 <a className="footer-feature-link" href="/#open-multiple-urls">Community Post Video</a>
@@ -343,7 +344,7 @@ export default async function BlogList() {
                 <a href="/dmca">DMCA</a>
               </div>
               <div className="footer-meta">
-                <span>Version 2.0</span>
+                <span>Version 2.2.1</span>
                 <span className="footer-separator">•</span>
                 <span>Chrome Extension</span>
                 <span className="footer-separator">•</span>

@@ -22,7 +22,7 @@ To download videos from Skool, install the **Skool Video Downloader** Chrome ext
 1. **Install the Extension:** Add Skool Video Downloader to your Chrome browser.
 2. **Open your Skool Course:** Log in to your community and navigate to the lesson you want to save.
 3. **Click Download:** Use the downloader icon in your browser toolbar or the overlay button on the video.
-4. **Select Quality:** Choose your preferred resolution (up to 4K) and save the MP4 file.
+4. **Select Quality:** Choose your preferred resolution from the qualities the video offers and save the MP4 file.
 
 ### Why use Skool Video Downloader?
 Unlike online web-based tools that often fail or compromise your privacy, our extension works **locally** in your browser. This means:
@@ -35,5 +35,5 @@ Unlike online web-based tools that often fail or compromise your privacy, our ex
 ### Is downloading Skool videos legal?
 Our tool is intended for **personal archival use**. Always ensure you have the rights to the content you are downloading and respect the terms of service of the content creators.
 
-### Does it support YouTube and Loom videos on Skool?
-Yes, Skool Video Downloader is compatible with all embedded players commonly used on the platform, including YouTube, Loom, Wistia, and Vimeo.
+### Does it support Loom and Vimeo videos on Skool?
+Yes, Skool Video Downloader works with Skool's native player and the embedded players commonly used on the platform: Loom, Wistia, and Vimeo. YouTube videos are not supported.

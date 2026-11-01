@@ -5,9 +5,17 @@ import styles from "./dashboard.module.css";
 
 interface PricingSectionProps {
   userEmail: string;
+  lifetimePrice: number;
+  slotsTaken: number;
+  nextPrice: number;
 }
 
-export default function PricingSection({ userEmail }: PricingSectionProps) {
+export default function PricingSection({ 
+  userEmail, 
+  lifetimePrice, 
+  slotsTaken, 
+  nextPrice 
+}: PricingSectionProps) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -20,10 +28,7 @@ export default function PricingSection({ userEmail }: PricingSectionProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          planId,
-          email: userEmail,
-        }),
+        body: JSON.stringify({ planId }),
       });
 
       const data = await response.json();
@@ -84,9 +89,21 @@ export default function PricingSection({ userEmail }: PricingSectionProps) {
           <div className={styles.bestValueBadge}>Best Value</div>
           <div className={styles.planTitle}>Lifetime Pro</div>
           <div className={styles.planPrice}>
-            <span>$</span>39<span>one-time</span>
+            <span>$</span>{lifetimePrice}<span>one-time</span>
           </div>
           <p className={styles.planDesc}>Pay once, own forever. The ultimate choice with zero recurring fees.</p>
+          
+          <div style={{ margin: '15px 0', fontSize: '13px', color: '#333' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontWeight: '500' }}>
+              <span>{slotsTaken}/10 Early-Bird Slots</span>
+              <span style={{ color: '#d97706' }}>Next: ${nextPrice}</span>
+            </div>
+            <div style={{ height: '6px', background: '#ebecedcc', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: '#d97706', width: `${slotsTaken * 10}%` }}></div>
+            </div>
+            <p style={{ fontSize: '11px', marginTop: '6px', color: '#666' }}>Price increases by $10 every 10 sales</p>
+          </div>
+
           <ul className={styles.planFeatures}>
             <li>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>

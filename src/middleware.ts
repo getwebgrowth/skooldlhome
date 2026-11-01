@@ -1,26 +1,14 @@
 import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const isAdmin = token?.email === process.env.ADMIN_EMAIL;
-    const isDashboardPage = req.nextUrl.pathname.startsWith("/dashboard");
-    const isAdminPage = req.nextUrl.pathname.startsWith("/admin");
-
-    if (isAdminPage && !isAdmin) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-
-    return NextResponse.next();
+// /admin is intentionally excluded here — it has its own standalone
+// username/password session (see src/lib/admin-auth.ts), checked directly
+// in each admin page/route, not the site's NextAuth session.
+export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => !!token,
   },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
-  }
-);
+});
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*"],
 };

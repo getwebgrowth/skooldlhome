@@ -1,14 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from "@/lib/admin-auth";
 
-export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+export async function POST(request: NextRequest) {
+  const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
 
   // Security check: Only allow admin
-  if (!session?.user || session.user.email !== process.env.ADMIN_EMAIL) {
+  if (!verifyAdminSessionToken(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
